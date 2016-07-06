@@ -216,31 +216,40 @@ class ServerWidget(QtGui.QWidget):
         print(self.dir)
 
     def click_phone(self):
-        self.data_vote_1 = {u'name': u'Телефон',
-                            u'fields': [u'Apple',
-                                        u'YotaPhone',
-                                        u'Samsung',
-                                        u'Sony',
-                                        u'Fly']}
-        self.on_mysignal(self.data_vote_1)
+        if self.dir == '':
+            self.click_work_folder()
+        elif self.dir != '':
+            self.data_vote_1 = {u'name': u'Телефон',
+                                u'fields': [u'Apple',
+                                            u'YotaPhone',
+                                            u'Samsung',
+                                            u'Sony',
+                                            u'Fly']}
+            self.on_mysignal(self.data_vote_1)
 
     def click_operator(self):
-        self.data_vote_2 = {u'name': u'Мобильный оператор',
-                            u'fields': [u'Tele2',
-                                        u'МТС',
-                                        u'Билайн',
-                                        u'Мегафон',
-                                        u'Yota']}
-        self.on_mysignal(self.data_vote_2)
+        if self.dir == '':
+            self.click_work_folder()
+        elif self.dir != '':
+            self.data_vote_2 = {u'name': u'Мобильный оператор',
+                                u'fields': [u'Tele2',
+                                            u'МТС',
+                                            u'Билайн',
+                                            u'Мегафон',
+                                            u'Yota']}
+            self.on_mysignal(self.data_vote_2)
 
     def click_cuisine(self):
-        self.data_vote_3 = {u'name': u'Кухня',
-                            u'fields': [u'Русская',
-                                        u'Китайская',
-                                        u'Французская',
-                                        u'Тайская',
-                                        u'Японская']}
-        self.on_mysignal(self.data_vote_3)
+        if self.dir == '':
+            self.click_work_folder()
+        elif self.dir != '':
+            self.data_vote_3 = {u'name': u'Кухня',
+                                u'fields': [u'Русская',
+                                            u'Китайская',
+                                            u'Французская',
+                                            u'Тайская',
+                                            u'Японская']}
+            self.on_mysignal(self.data_vote_3)
 
     def click_send(self):
         result = QtGui.QMessageBox.question(self,
@@ -543,6 +552,9 @@ class ServerWidget(QtGui.QWidget):
                 self.clearLayout(child.layout())
 
 class ServerWindow(QtGui.QMainWindow):
+    if self.dir == '':
+        self.click_work_folder()
+    elif self.dir != '':
     def __init__(self, parent=None):
         print('Запуск сервера...')
         QtGui.QMainWindow.__init__(self, parent)
