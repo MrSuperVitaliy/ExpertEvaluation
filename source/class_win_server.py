@@ -1,10 +1,15 @@
-# coding: utf-8
 __author__ = 'Admin'
 
+import pickle
+import os
 from PyQt4 import QtGui, QtCore
-import class_win_select_data, class_win_client, class_win_enter_data, class_win_result, MyGui
-import pickle, os
+# import class_win_select_data
+# import class_win_client
+import class_win_enter_data
+import class_win_result
+import MyGui
 import class_win_result_client
+
 
 class ServerWidget(QtGui.QWidget):
     def __init__(self, parent):
@@ -70,7 +75,7 @@ class ServerWidget(QtGui.QWidget):
 
         # правый hbox: tab, на табе фреймы, панель с кнопками
         self.right_vbox.addWidget(self.tab)
-        self.frame_parn.setLayout(self.table_box) # добавить Layout с qframe
+        self.frame_parn.setLayout(self.table_box)  # добавить Layout с qframe
         self.frame_nepo.setLayout(self.nepo_box)
         self.frame_ranzh.setLayout(self.ranzh_box)
         self.frame_comp.setLayout(self.comp_box)
@@ -82,7 +87,6 @@ class ServerWidget(QtGui.QWidget):
         self.right_vbox.addLayout(self.btn_hbox)
 
         self.left_vbox.addWidget(self.group_box_default)
-        # self.left_vbox.addWidget(self.button_select_data)
         self.left_vbox.addWidget(self.button_open_data)
         self.left_vbox.addWidget(self.button_enter_data)
         self.left_vbox.addWidget(self.button_work_folder)
@@ -95,7 +99,6 @@ class ServerWidget(QtGui.QWidget):
         self.mainhbox.addLayout(self.right_vbox)
         self.setLayout(self.mainhbox)
 
-        # self.connect(self.button_select_data, QtCore.SIGNAL('clicked()'), self.click_select_data)
         self.connect(self.button_phone, QtCore.SIGNAL('clicked()'), self.click_phone)
         self.connect(self.button_operator, QtCore.SIGNAL('clicked()'), self.click_operator)
         self.connect(self.button_cuisine, QtCore.SIGNAL('clicked()'), self.click_cuisine)
@@ -117,16 +120,19 @@ class ServerWidget(QtGui.QWidget):
         self.enter_name.show()
 
     def init_names(self, data):
+        """
+        инициализация имен
+        """
         self.name = data[0]
         self.group = data[1]
-        self.ok = data[2]
+        # self.ok = data[2]
         self.parent.statusBar().showMessage(self.name)
 
     def click_check_result(self):
-        # парсит папку, открывает файл с расширением .rea
-        # смотрит на первый элемент списка, True или False
-
-        # БЛОК ОТКЛЮЧЕН ДЛЯ ТЕСТОВ
+        """
+        парсит папку, открывает файл с расширением .rea
+        смотрит на первый элемент списка, True или False
+        """
         flag1 = True
         for i in os.listdir(self.dir):  # получаем список файлов
             if flag1:
@@ -143,12 +149,15 @@ class ServerWidget(QtGui.QWidget):
             print('Нет всех результатов')
 
     def sform_file_client(self):
-        # функция должна парсить рабочий каталог на наличие файлов с именами, а затем составлять один файл client.ea
+        """
+        функция должна парсить рабочий каталог на наличие файлов с именами,
+        а затем составлять один файл client.ea
+        """
         self.list_files = os.listdir(self.dir)
         self.list_client = []
         for i in self.list_files:
             if i.count('.rea') > 0:
-                self.list_client.append(i[:len(i)-4])
+                self.list_client.append(i[:len(i) - 4])
                 print(i)
         self.file = open(self.dir + '\\' + 'client.ea', 'wb')
         # записываем в файл полученный список
@@ -199,7 +208,6 @@ class ServerWidget(QtGui.QWidget):
 
     def click_work_folder(self):
         print('Текущая папка ', QtCore.QDir.currentPath() + '\\Expert\\')
-        print('Проба', QtCore.QDir.homePath())
         self.dir = QtGui.QFileDialog.getExistingDirectory(parent=self,
                                                           directory=QtCore.QDir.homePath())
         if self.dir != '':
@@ -219,7 +227,7 @@ class ServerWidget(QtGui.QWidget):
     def click_phone(self):
         if self.dir == '':
             self.click_work_folder()
-        elif self.dir != '':
+        if self.dir != '':
             self.data_vote_1 = {u'name': u'Телефон',
                                 u'fields': [u'Apple',
                                             u'YotaPhone',
@@ -231,7 +239,7 @@ class ServerWidget(QtGui.QWidget):
     def click_operator(self):
         if self.dir == '':
             self.click_work_folder()
-        elif self.dir != '':
+        if self.dir != '':
             self.data_vote_2 = {u'name': u'Мобильный оператор',
                                 u'fields': [u'Tele2',
                                             u'МТС',
@@ -243,7 +251,7 @@ class ServerWidget(QtGui.QWidget):
     def click_cuisine(self):
         if self.dir == '':
             self.click_work_folder()
-        elif self.dir != '':
+        if self.dir != '':
             self.data_vote_3 = {u'name': u'Кухня',
                                 u'fields': [u'Русская',
                                             u'Китайская',
@@ -261,17 +269,16 @@ class ServerWidget(QtGui.QWidget):
         if result == QtGui.QMessageBox.Yes:
 
             print('Формирование результата...')
-            # self.result = ''  # общий результат
 
             # результаты из ТАБЛИЦЫ
-            self.result_table = self.table.get_list_buttons()
+            result_table = self.table.get_list_buttons()
 
             # результаты из НЕПОСРЕДСТВЕННОГО ОЦЕНИВАНИЯ??? после нормализации???
             if not self.was_normalization:
                 self.normalization()
 
             # результаты из РАНЖИРОВАНИЯ
-            self.result_ranzh = {} # словарь "номер поля из self.data_vote - ранг"
+            self.result_ranzh = {}  # словарь "номер поля из self.data_vote - ранг"
             self.sum = 0
             self.count = 0
             self.var1 = []
@@ -283,32 +290,36 @@ class ServerWidget(QtGui.QWidget):
             # если все символы в label это '>', то
             if self.ranzh_list_labels_text.count('~') == 0:
                 for i in range(len(self.ranzh_list_buttons)):
-                    self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i+1
+                    self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
             else:  # если встречаются '~', то большие вычисления:
                 for i in range(len(self.ranzh_list_buttons)):
 
                     if i == 0:  # если первый элемент
 
                         if self.ranzh_list_labels_text[i] == '>':  # это не связанный ранг
-                            self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i+1
-                            print(self.ranzh_list_buttons[i].text(), i+1)
+                            self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
+                            print(self.ranzh_list_buttons[i].text(), i + 1)
                         else:  # тогда это начало связанного ранга
                             self.index_svyaz_rang = i
-                            self.nach_svyaz_rang = i+1
+                            self.nach_svyaz_rang = i + 1
                             self.sum += self.nach_svyaz_rang
                             self.count += 1
 
-                    elif i+1 == len(self.ranzh_list_buttons):  # если последний элемент
+                    elif i + 1 == len(self.ranzh_list_buttons):  # если последний элемент
 
-                        if self.ranzh_list_labels_text[i-1] == '>':  # это не связанный ранг
+                        # это не связанный ранг
+                        if self.ranzh_list_labels_text[i - 1] == '>':
                             self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
                             print(self.ranzh_list_buttons[i].text(), i + 1)
-                        else:  # тогда это конец связанного ранга
-                            self.sum += i+1
+
+                        # тогда это конец связанного ранга
+                        else:
+                            self.sum += i + 1
                             self.count += 1
                             self.svyz_rang = self.sum / self.count
                             for j in range(self.count):
-                                self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[self.index_svyaz_rang].text())] = self.svyz_rang
+                                self.result_ranzh[self.data_vote['fields'].index(
+                                    self.ranzh_list_buttons[self.index_svyaz_rang].text())] = self.svyz_rang
                                 print(self.ranzh_list_buttons[self.index_svyaz_rang].text(), self.svyz_rang)
                                 self.nach_svyaz_rang += 1
                                 self.index_svyaz_rang += 1
@@ -318,22 +329,32 @@ class ServerWidget(QtGui.QWidget):
 
                     else:  # это объект по середине
 
-                        if self.ranzh_list_labels_text[i-1] == '>' and self.ranzh_list_labels_text[i] == '>':  # это не связанный ранг посередине
+                        # это не связанный ранг посередине
+                        if (self.ranzh_list_labels_text[i - 1] == '>') and \
+                                (self.ranzh_list_labels_text[i] == '>'):
                             self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
                             print(self.ranzh_list_buttons[i].text(), i + 1)
-                        elif self.ranzh_list_labels_text[i-1] == '>' and self.ranzh_list_labels_text[i] == '~':  # это начало связанного ранга
+
+                        # это начало связанного ранга
+                        elif (self.ranzh_list_labels_text[i - 1] == '>') and \
+                                (self.ranzh_list_labels_text[i] == '~'):
                             self.index_svyaz_rang = i
                             self.nach_svyaz_rang = i + 1
                             self.sum += self.nach_svyaz_rang
                             self.count += 1
-                        elif self.ranzh_list_labels_text[i-1] == '~' and self.ranzh_list_labels_text[i] == '~':  # связанный ранг посередине
-                            self.sum += i+1
+
+                        # связанный ранг посередине
+                        elif (self.ranzh_list_labels_text[i - 1] == '~') and \
+                                (self.ranzh_list_labels_text[i] == '~'):
+                            self.sum += i + 1
                             self.count += 1
-                        elif self.ranzh_list_labels_text[i-1] == '~' and self.ranzh_list_labels_text[i] == '>':  # это конец связанного ранга
-                            self.sum += i+1
+
+                        # это конец связанного ранга
+                        elif self.ranzh_list_labels_text[i - 1] == '~' and \
+                                (self.ranzh_list_labels_text[i] == '>'):
+                            self.sum += i + 1
                             self.count += 1
                             self.svyz_rang = self.sum / self.count
-                            print('Sum ', self.sum, ', count ', self.count, ', svyz_rang', self.svyz_rang)
                             for j in range(self.count):
                                 self.result_ranzh[self.data_vote['fields'].index(
                                     self.ranzh_list_buttons[self.index_svyaz_rang].text())] = self.svyz_rang
@@ -356,7 +377,7 @@ class ServerWidget(QtGui.QWidget):
             # результаты из КОМПЕТЕНТНОСТИ
             self.result_comp = self.table_comp.get_list_buttons()
 
-            print('Результат парного сравнения:  ', self.result_table)
+            print('Результат парного сравнения:  ', result_table)
             print('Результат непоср. оценивания: ', self.result_nepo)
             print('Результат ранжирования:       ', self.result_ranzh_all)
             print('Результат компетентности:     ', self.result_comp)
@@ -364,7 +385,7 @@ class ServerWidget(QtGui.QWidget):
             # отправка результатов на сервер
             self.very_result = []
             # self.very_result.append(True)
-            self.very_result.append(self.result_table)
+            self.very_result.append(result_table)
             self.very_result.append(self.result_nepo)
             self.very_result.append(self.result_ranzh_all)
             self.very_result.append(self.result_comp)
@@ -398,14 +419,13 @@ class ServerWidget(QtGui.QWidget):
                                    self.data_vote)
         self.table_box.addWidget(self.table)
 
-
         # НАСТРОЙКА 2-ОЙ ВКЛАДКИ (НЕПОСРЕДСТВЕННОГО ОЦЕНИВАНИЯ)
         self.clearLayout(self.nepo_box)  # очистка layout
         self.nepo_list = []  # список с группами label-slider-label
         for i in self.data_vote[u'fields']:
             self.nepo_list.append(MyGui.MyGroupSlider(i))
             self.connect(self.nepo_list[len(self.nepo_list) - 1], QtCore.SIGNAL('valuechange'), self.change_sum_nepo)
-            self.nepo_box.addLayout(self.nepo_list[len(self.nepo_list)-1])
+            self.nepo_box.addLayout(self.nepo_list[len(self.nepo_list) - 1])
 
         self.label_sum = QtGui.QLabel(u'0')
         self.nepo_box.addWidget(self.label_sum, alignment=QtCore.Qt.AlignRight)
@@ -413,7 +433,6 @@ class ServerWidget(QtGui.QWidget):
         self.button_norma = QtGui.QPushButton(u'Нормализовать')
         self.nepo_box.addWidget(self.button_norma, alignment=QtCore.Qt.AlignRight)
         self.connect(self.button_norma, QtCore.SIGNAL('clicked()'), self.normalization)
-
 
         # НАСТРОЙКА 3-ЕЙ ВКЛАДКИ (РАНЖИРОВАНИЕ)
         self.clearLayout(self.grid_ranzh)
@@ -444,7 +463,7 @@ class ServerWidget(QtGui.QWidget):
         self.sum = 0
         for i in self.nepo_list:
             self.sum += i.get_value() / 100
-        self.label_sum.setText(str(round(self.sum,2)))
+        self.label_sum.setText(str(round(self.sum, 2)))
 
     def normalization(self):
         print('Нормализация:')
@@ -482,24 +501,26 @@ class ServerWidget(QtGui.QWidget):
             self.ranzh_list_buttons[index].setFont(self.font)
             self.change_ranzh_var.update({'index': index})
             self.change_ranzh_var.update({'isClick': True})
-        elif self.change_ranzh_var['isClick'] & (index == self.change_ranzh_var['index']):  # если клик был по той же кнопке, то отключаем клик
+        elif self.change_ranzh_var['isClick'] & (
+            index == self.change_ranzh_var['index']):  # если клик был по той же кнопке, то отключаем клик
             self.font = QtGui.QFont()
             self.font.setBold(False)
             self.ranzh_list_buttons[index].setFont(self.font)
             self.change_ranzh_var.update({'index': -1})
             self.change_ranzh_var.update({'isClick': False})
-        elif self.change_ranzh_var['isClick'] & (index != self.change_ranzh_var['index']):  # если был клик по другой кнопке, то
+        elif self.change_ranzh_var['isClick'] & (
+            index != self.change_ranzh_var['index']):  # если был клик по другой кнопке, то
             # формирование нового списка ranzh_list_buttons
             self.temp_var = []
-            self.temp_var.extend(self.ranzh_list_buttons[:min(index, self.change_ranzh_var['index'])])  # в новый копируется начало списка до первого упоминаемого индекса
+            self.temp_var.extend(self.ranzh_list_buttons[:min(index, self.change_ranzh_var[
+                'index'])])  # в новый копируется начало списка до первого упоминаемого индекса
             if index < self.change_ranzh_var['index']:  # если элемент перемещается справа налево <-
                 self.temp_var.append(self.ranzh_list_buttons[self.change_ranzh_var['index']])
                 self.temp_var.extend(self.ranzh_list_buttons[index:self.change_ranzh_var['index']])
             elif index > self.change_ranzh_var['index']:  # если элемент перемещается слева направо ->
                 self.temp_var.extend(self.ranzh_list_buttons[self.change_ranzh_var['index'] + 1:index + 1])
                 self.temp_var.append(self.ranzh_list_buttons[self.change_ranzh_var['index']])
-            self.temp_var.extend(self.ranzh_list_buttons[max(index+1, self.change_ranzh_var['index']+1):])
-
+            self.temp_var.extend(self.ranzh_list_buttons[max(index + 1, self.change_ranzh_var['index'] + 1):])
 
             # self.ranzh_list_buttons = []
             self.ranzh_list_buttons = self.temp_var
@@ -513,7 +534,6 @@ class ServerWidget(QtGui.QWidget):
                 self.ranzh_list_labels[self.change_ranzh_var['index'] - 1].set_value()
             if self.change_ranzh_var['index'] != len(self.ranzh_list_labels):
                 self.ranzh_list_labels[self.change_ranzh_var['index']].set_value()
-
 
             self.font = QtGui.QFont()
             self.font.setBold(False)
@@ -551,6 +571,7 @@ class ServerWidget(QtGui.QWidget):
                 child.widget().deleteLater()
             elif child.layout() is not None:
                 self.clearLayout(child.layout())
+
 
 class ServerWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):

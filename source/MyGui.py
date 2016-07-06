@@ -175,7 +175,6 @@ class ResultTable(QtGui.QTableWidget):
 
         for i in range(len(data)):
             for j in range(len(data[i])):
-                print('Ошибка: ', data[i][j])
                 label = QtGui.QLabel(str(round(data[i][j], 3)))
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 self.setCellWidget(i, j, label)
