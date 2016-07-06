@@ -544,6 +544,7 @@ class ServerWidget(QtGui.QWidget):
 
 class ServerWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
+		print('Запуск сервера...')
         QtGui.QMainWindow.__init__(self, parent)
         self.window = ServerWidget(parent=self)
         self.setCentralWidget(self.window)
