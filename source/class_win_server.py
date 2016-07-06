@@ -199,8 +199,9 @@ class ServerWidget(QtGui.QWidget):
 
     def click_work_folder(self):
         print('Текущая папка ', QtCore.QDir.currentPath() + '\\Expert\\')
+        print('Проба', QtCore.QDir.homePath())
         self.dir = QtGui.QFileDialog.getExistingDirectory(parent=self,
-                                                          directory=QtCore.QDir.currentPath()+'\\Expert\\')
+                                                          directory=QtCore.QDir.homePath())
         if self.dir != '':
             # сначала очищаем эту папку от возможных прошлых результатов
             for i in os.listdir(self.dir):
@@ -552,9 +553,6 @@ class ServerWidget(QtGui.QWidget):
                 self.clearLayout(child.layout())
 
 class ServerWindow(QtGui.QMainWindow):
-    if self.dir == '':
-        self.click_work_folder()
-    elif self.dir != '':
     def __init__(self, parent=None):
         print('Запуск сервера...')
         QtGui.QMainWindow.__init__(self, parent)
