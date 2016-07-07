@@ -3,7 +3,7 @@ __author__ = 'Admin'
 
 from PyQt4 import QtGui, QtCore
 import pickle, MyGui
-import class_win_result_client, os
+import result_client, os
 
 class ClientWidget(QtGui.QWidget):
     def __init__(self, parent):
@@ -124,8 +124,8 @@ class ClientWidget(QtGui.QWidget):
                 file = open(self.dir + '//' + 'result.aea', 'rb')
                 data = pickle.load(file)
                 file.close()
-                self.class_win_result_client = class_win_result_client.ResultWindowClient(data)
-                self.class_win_result_client.show()
+                self.result_client = result_client.ResultWindowClient(data)
+                self.result_client.show()
 
     def click_send(self):
         result = QtGui.QMessageBox.question(self,

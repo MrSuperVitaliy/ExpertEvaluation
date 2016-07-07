@@ -4,6 +4,7 @@ __author__ = 'Admin'
 from PyQt4 import QtGui, QtCore
 from functools import partial
 
+
 class Combo(QtGui.QComboBox):
     def __init__(self):
         QtGui.QComboBox.__init__(self)
@@ -11,6 +12,7 @@ class Combo(QtGui.QComboBox):
         self.addItem(u'0.5')  # было 1
         self.addItem(u'1')  # было 2
         self.setCurrentIndex(1)
+
 
 class SimpleTable(QtGui.QTableWidget):
     def __init__(self, data_vote, result):
@@ -43,6 +45,7 @@ class SimpleTable(QtGui.QTableWidget):
                     self.setCellWidget(self.a, self.b, self.buferZ)
                 else:
                     self.setCellWidget(self.a, self.b, QtGui.QLabel(''))
+
 
 class MyTable(QtGui.QTableWidget):
     def __init__(self, a, b, data_vote):
@@ -103,6 +106,7 @@ class MyTable(QtGui.QTableWidget):
             self.result_table.append(self.bufer)
         return self.result_table
 
+
 class TableExpert(QtGui.QTableWidget):
     def __init__(self, list):
         QtGui.QTableWidget.__init__(self, len(list), 1)
@@ -139,6 +143,7 @@ class TableExpert(QtGui.QTableWidget):
             self.result_table.append(int(i.text()))
         return self.result_table
 
+
 class SimpleTableExpert(QtGui.QTableWidget):
     def __init__(self, clients, result):
         QtGui.QTableWidget.__init__(self, len(result), 1)
@@ -161,6 +166,7 @@ class SimpleTableExpert(QtGui.QTableWidget):
                 label.setStyleSheet('background-color: #7FD4A8')
             self.setCellWidget(i, 0, label)
 
+
 class ResultTable(QtGui.QTableWidget):
     def __init__(self, data, name_a, name_b, a, b):
         QtGui.QTableWidget.__init__(self, a, b)
@@ -179,6 +185,7 @@ class ResultTable(QtGui.QTableWidget):
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 self.setCellWidget(i, j, label)
 
+
 class ResultTableComp(QtGui.QTableWidget):
     def __init__(self, data, name_a, name_b, a, b):
         QtGui.QTableWidget.__init__(self, a, b)
@@ -196,6 +203,7 @@ class ResultTableComp(QtGui.QTableWidget):
                 label = QtGui.QLabel(str(round(data[j][i], 3)))
                 label.setAlignment(QtCore.Qt.AlignCenter)
                 self.setCellWidget(i, j, label)
+
 
 class MyTabWidgetResult(QtGui.QTabWidget):
     def __init__(self, nepo, parn, ranzh, comp, clients, data_vote):
@@ -302,6 +310,7 @@ class MyTabWidgetResult(QtGui.QTabWidget):
             self.button_change_comp.setText('Сводная таблица')
             self.flag_comp = 0
 
+
 class MyTabWidget(QtGui.QTabWidget):
     def __init__(self, clients, data_vote, result):
         QtGui.QTabWidget.__init__(self)
@@ -351,6 +360,7 @@ class MyTabWidget(QtGui.QTabWidget):
         self.addTab(self.frame_ranzh, u'Ранжирование')
         self.addTab(self.frame_comp, u'Компетентность')
 
+
 class SimpleGroupSlider(QtGui.QHBoxLayout):
     def __init__(self, data, source_value, calc_value):  # data - название одного поля; value
         QtGui.QHBoxLayout.__init__(self)
@@ -372,6 +382,7 @@ class SimpleGroupSlider(QtGui.QHBoxLayout):
         self.addWidget(self.name_label)
         self.addWidget(self.slider)
         self.addWidget(self.value_label)
+
 
 class MyGroupSlider(QtGui.QHBoxLayout):
     def __init__(self, data):
@@ -411,10 +422,12 @@ class MyGroupSlider(QtGui.QHBoxLayout):
     def set_label(self, num):
         self.value_label.setText(str(num))
 
+
 class MyButton(QtGui.QPushButton):
     def __init__(self, text):
         QtGui.QPushButton.__init__(self)
         self.setText(text)
+
 
 class MyLabel(QtGui.QLabel):
     def __init__(self, text):
@@ -439,15 +452,6 @@ class MyLabel(QtGui.QLabel):
     def set_value(self):
         self.setText('>')
 
-    # def dragEnterEvent(self, e):
-    #     e.accept
-
-    # def dropEvent(self, e):
-    #     # отправить какой-то сигнал, какой именно label под курсором
-    #     self.emit(QtCore.SIGNAL('mydrag'), e, self.index, e.mimeData().text())
-    #
-    # def set_index(self, index):  # изменение индекса
-    #     self.index = index
 
 class InputDialog(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -486,13 +490,15 @@ class InputDialog(QtGui.QWidget):
         self.emit(QtCore.SIGNAL('mysignal2'), self.data)
         self.close()
 
-def clearLayout(layout):
+
+def clear_layout(layout):
     while layout.count():
         child = layout.takeAt(0)
         if child.widget() is not None:
             child.widget().deleteLater()
         elif child.layout() is not None:
-            clearLayout(child.layout())
+            clear_layout(child.layout())
+
 
 def few_line(data):  # функция для обрезки длинных строк
     for i in range(len(data[u'fields'])):
