@@ -497,6 +497,7 @@ class MainTab(QtGui.QWidget):
 
 
 
+
 def matrix(a, b):
     c = []
     for i in range(len(a)):
