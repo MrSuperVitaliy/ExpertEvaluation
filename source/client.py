@@ -2,7 +2,7 @@
 __author__ = 'Admin'
 
 from PyQt4 import QtGui, QtCore
-import pickle, MyGui
+import pickle, my_gui
 import result_client, os
 
 class ClientWidget(QtGui.QWidget):
@@ -20,7 +20,8 @@ class ClientWidget(QtGui.QWidget):
 
         self.dir = ''
         self.username = ''
-        self.data_vote = ''
+        self.subjects = ''
+        self.table_comp = None
         self.change_ranzh_var = {'index': -1, 'isClick': False}
         self.ranzh_list_buttons = []
         self.ranzh_list_labels = []
@@ -89,7 +90,7 @@ class ClientWidget(QtGui.QWidget):
     def compet_tab(self):
         if self.list_client != []:
             self.clearLayout(self.comp_box)
-        self.table_comp = MyGui.TableExpert(self.list_client)
+        self.table_comp = my_gui.TableExpert(self.list_client)
         self.comp_box.addWidget(self.table_comp)
 
     def click_read_task(self):
@@ -128,6 +129,9 @@ class ClientWidget(QtGui.QWidget):
                 self.result_client.show()
 
     def click_send(self):
+
+        if not self.table_comp:
+            self.show_tip('Не оценена компетентность группы!')
         result = QtGui.QMessageBox.question(self,
                                             u'Подтвердите отправку',
                                             u'Отправить результаты на сервер?',
@@ -146,7 +150,7 @@ class ClientWidget(QtGui.QWidget):
                 self.normalization()
 
             # результаты из РАНЖИРОВАНИЯ
-            self.result_ranzh = {}  # словарь "номер поля из self.data_vote - ранг"
+            self.result_ranzh = {}  # словарь "номер поля из self.subjects - ранг"
             self.sum = 0
             self.count = 0
             self.var1 = []
@@ -158,14 +162,14 @@ class ClientWidget(QtGui.QWidget):
             # если все символы в label это '>', то
             if self.ranzh_list_labels_text.count('~') == 0:
                 for i in range(len(self.ranzh_list_buttons)):
-                    self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
+                    self.result_ranzh[self.subjects['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
             else:  # если встречаются '~', то большие вычисления:
                 for i in range(len(self.ranzh_list_buttons)):
 
                     if i == 0:  # если первый элемент
 
                         if self.ranzh_list_labels_text[i] == '>':  # это не связанный ранг
-                            self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
+                            self.result_ranzh[self.subjects['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
                             print(self.ranzh_list_buttons[i].text(), i + 1)
                         else:  # тогда это начало связанного ранга
                             self.index_svyaz_rang = i
@@ -176,14 +180,14 @@ class ClientWidget(QtGui.QWidget):
                     elif i + 1 == len(self.ranzh_list_buttons):  # если последний элемент
 
                         if self.ranzh_list_labels_text[i - 1] == '>':  # это не связанный ранг
-                            self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
+                            self.result_ranzh[self.subjects['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
                             print(self.ranzh_list_buttons[i].text(), i + 1)
                         else:  # тогда это конец связанного ранга
                             self.sum += i + 1
                             self.count += 1
                             self.svyz_rang = self.sum / self.count
                             for j in range(self.count):
-                                self.result_ranzh[self.data_vote['fields'].index(
+                                self.result_ranzh[self.subjects['fields'].index(
                                     self.ranzh_list_buttons[self.index_svyaz_rang].text())] = self.svyz_rang
                                 print(self.ranzh_list_buttons[self.index_svyaz_rang].text(), self.svyz_rang)
                                 self.nach_svyaz_rang += 1
@@ -196,7 +200,7 @@ class ClientWidget(QtGui.QWidget):
 
                         if self.ranzh_list_labels_text[i - 1] == '>' and self.ranzh_list_labels_text[
                             i] == '>':  # это не связанный ранг посередине
-                            self.result_ranzh[self.data_vote['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
+                            self.result_ranzh[self.subjects['fields'].index(self.ranzh_list_buttons[i].text())] = i + 1
                             print(self.ranzh_list_buttons[i].text(), i + 1)
                         elif self.ranzh_list_labels_text[i - 1] == '>' and self.ranzh_list_labels_text[
                             i] == '~':  # это начало связанного ранга
@@ -215,7 +219,7 @@ class ClientWidget(QtGui.QWidget):
                             self.svyz_rang = self.sum / self.count
                             print('Sum ', self.sum, ', count ', self.count, ', svyz_rang', self.svyz_rang)
                             for j in range(self.count):
-                                self.result_ranzh[self.data_vote['fields'].index(
+                                self.result_ranzh[self.subjects['fields'].index(
                                     self.ranzh_list_buttons[self.index_svyaz_rang].text())] = self.svyz_rang
                                 print(self.ranzh_list_buttons[self.index_svyaz_rang].text(), self.svyz_rang)
                                 self.nach_svyaz_rang += 1
@@ -267,24 +271,23 @@ class ClientWidget(QtGui.QWidget):
         self.button_send.setDisabled(False)
         self.was_normalization = False
 
-        self.data_vote = a
-        self.data_vote = MyGui.few_line(self.data_vote)
+        self.subjects = a
+        self.subjects = my_gui.few_line(self.subjects)
 
-        # self.label_text.setText(u'Таблица \'%s\':' % self.data_vote[u'name'])
-        self.parent.setWindowTitle(u'Клиент' + u' - ' + self.data_vote[u'name'])
+        self.parent.setWindowTitle(u'Клиент' + u' - ' + self.subjects[u'theme'])
 
         # НАСТРОЙКА 1-ОЙ ВКЛАДКИ (ТАБЛИЦЫ)
         self.clearLayout(self.table_box)  # функция очистки контейнера от предыдущего задания
-        self.table = MyGui.MyTable(len(self.data_vote[u'fields']),
-                                   len(self.data_vote[u'fields']),
-                                   self.data_vote)
+        self.table = my_gui.MyTable(len(self.subjects[u'fields']),
+                                   len(self.subjects[u'fields']),
+                                   self.subjects)
         self.table_box.addWidget(self.table)
 
         # НАСТРОЙКА 2-ОЙ ВКЛАДКИ (НЕПОСРЕДСТВЕННОГО ОЦЕНИВАНИЯ)
         self.clearLayout(self.nepo_box)  # очистка layout
         self.nepo_list = []  # список с группами label-slider-label
-        for i in self.data_vote[u'fields']:
-            self.nepo_list.append(MyGui.MyGroupSlider(i))
+        for i in self.subjects[u'fields']:
+            self.nepo_list.append(my_gui.MyGroupSlider(i))
             self.connect(self.nepo_list[len(self.nepo_list) - 1], QtCore.SIGNAL('valuechange'), self.change_sum_nepo)
             self.nepo_box.addLayout(self.nepo_list[len(self.nepo_list) - 1])
 
@@ -300,13 +303,13 @@ class ClientWidget(QtGui.QWidget):
         self.ranzh_list_buttons = []
         self.ranzh_list_labels = []
         self.count_widgets = 0
-        for i in range(len(self.data_vote[u'fields'])):  # в i у нас индексы по количеству полей 'fields'
-            self.ranzh_list_buttons.append(MyGui.MyButton(self.data_vote[u'fields'][i]))
+        for i in range(len(self.subjects[u'fields'])):  # в i у нас индексы по количеству полей 'fields'
+            self.ranzh_list_buttons.append(my_gui.MyButton(self.subjects[u'fields'][i]))
             self.group_buttons_ranzh.addButton(self.ranzh_list_buttons[i], i)  # добавляем кнопку в группу кнопок
             self.grid_ranzh.addWidget(self.ranzh_list_buttons[i], 0, self.count_widgets)
             self.count_widgets += 1
-            if i != len(self.data_vote[u'fields']) - 1:  # если элемент не последний, то после него нужен label
-                self.ranzh_list_labels.append(MyGui.MyLabel(u'>'))
+            if i != len(self.subjects[u'fields']) - 1:  # если элемент не последний, то после него нужен label
+                self.ranzh_list_labels.append(my_gui.MyLabel(u'>'))
                 self.grid_ranzh.addWidget(self.ranzh_list_labels[i], 0, self.count_widgets)
                 self.count_widgets += 1
         print(self.grid_ranzh.columnCount())
