@@ -495,7 +495,7 @@ class MainTab(QtGui.QWidget):
     def __init__(self):
         QtGui.QTabWidget.__init__(self)
 
-
+    print()
 
 
 def matrix(a, b):
