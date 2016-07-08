@@ -100,7 +100,7 @@ class ClientWidget(QtGui.QWidget):
             file_task = open(self.dir + '\\' + 'task.ea', 'rb')
             result = pickle.load(file_task)
             print(result)
-            self.on_mysignal(result)
+            self.set_subjects(result)
             file_task.close()
             # при выборе нового задания результат предыдущего стирается из сетевого файла
             file = open(self.dir + '\\' + self.username + '.rea', 'wb')
@@ -266,7 +266,7 @@ class ClientWidget(QtGui.QWidget):
             elif child.layout() is not None:
                 self.clearLayout(child.layout())
 
-    def on_mysignal(self, a):
+    def set_subjects(self, a):
 
         self.button_send.setDisabled(False)
         self.was_normalization = False
@@ -436,6 +436,6 @@ class ClientWindow(QtGui.QMainWindow):
                                             QtGui.QMessageBox.No)
         if result == QtGui.QMessageBox.Yes:
             e.accept()
-            QtGui.QWidget.closeEvent(self, e)
+            quit()
         else:
             e.ignore()

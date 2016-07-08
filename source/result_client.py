@@ -58,15 +58,15 @@ class ResultWindowClient(QtGui.QWidget):
         self.list_tab = []
         for i in range(len(data[3])):
             self.list_tab.append(my_gui.MyTabWidget(data[1],
-                                                   data[2],
-                                                   data[3][i]))
+                                                    data[2],
+                                                    data[3][i]))
 
         self.tab_all_result = my_gui.MyTabWidgetResult(data[4],
-                                                      data[5],
-                                                      data[6],
-                                                      data[7],
-                                                      data[1],
-                                                      data[2])
+                                                       data[5],
+                                                       data[6],
+                                                       data[7],
+                                                       data[1],
+                                                       data[2])
 
         self.right_vbox.addWidget(self.tab_all_result)
 

@@ -28,12 +28,11 @@ class EnterDataWindow(QtGui.QWidget):
                      self.click_button)
 
     def click_button(self):
-        self.bufer = self.edit.toPlainText()
-        self.data_vote = {u'name': u'',
+        bufer = self.edit.toPlainText()
+        subjects = {u'name': u'',
                           u'fields': []}
-        data = self.bufer.split('\n')
-        self.data_vote[u'name'] = data[0]
-        self.data_vote[u'fields'] = data[1:]
-        print(self.data_vote)
-        self.emit(QtCore.SIGNAL('enterdata'), self.data_vote)
+        data = bufer.split('\n')
+        subjects[u'name'] = data[0]
+        subjects[u'fields'] = data[1:]
+        self.emit(QtCore.SIGNAL('enterdata'), subjects)
         self.close()

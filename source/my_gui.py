@@ -3,6 +3,7 @@ __author__ = 'Admin'
 
 from PyQt4 import QtGui, QtCore
 from functools import partial
+from my_functions import *
 
 
 class Combo(QtGui.QComboBox):
@@ -151,7 +152,7 @@ class SimpleTableExpert(QtGui.QTableWidget):
         self.resizeRowsToContents()
         self.setSortingEnabled(False)  # отключение возможности сортировки
         self.setCornerButtonEnabled(False)  # отлючить выделение таблицы в левом верхнем углу
-        # self.verticalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
+        self.verticalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
         self.horizontalHeader().hide()
 
         self.setVerticalHeaderLabels(clients)
@@ -437,17 +438,15 @@ class MyLabel(QtGui.QLabel):
         self.font = QtGui.QFont()
         self.font.setPointSize(15)
         self.setFont(self.font)
-        # шрифт
+
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.mouseReleaseEvent = self.change_value
 
     def change_value(self, event):
         if self.text() == '>':
             self.setText('~')
-            print(u'Изменено на \'~\'')
         else:
             self.setText('>')
-            print(u'Изменено на \'>\'')
 
     def set_value(self):
         self.setText('>')
@@ -481,21 +480,321 @@ class InputDialog(QtGui.QWidget):
 
     def click(self):
         print(self.line_name.text())
-        print(self.line_group.text())
-        self.data = [self.line_name.text(), self.line_group.text()]
+        data = [self.line_name.text(), self.line_group.text()]
         if (self.label_name.text() != '') & (self.label_group.text() != ''):
-            self.data.append(True)
+            data.append(True)
         else:
-            self.data.append(False)
-        self.emit(QtCore.SIGNAL('mysignal2'), self.data)
+            data.append(False)
+        self.emit(QtCore.SIGNAL('mysignal2'), data)
         self.close()
 
 
-class MainTab(QtGui.QWidget):
+class MainTab(QtGui.QTabWidget):
     def __init__(self):
         QtGui.QTabWidget.__init__(self)
 
-    print()
+        self.frame_pair = QtGui.QFrame()  # фрейм на tab для парного оценивания
+        self.frame_direct = QtGui.QFrame()  # фрейм на tab для непосредственного оценивания
+        self.frame_ranging = QtGui.QFrame()  # фрейм на tab для ранжирования
+        self.frame_competence = QtGui.QFrame()  # фрейм на tab для ранжирования
+
+        self.box_pair = QtGui.QHBoxLayout()  # для таблицы
+        self.box_direct = QtGui.QVBoxLayout()  # для непосредственной оценки
+        # self.box_ranging = QtGui.QHBoxLayout()  # для ранжирования
+        self.box_competence = QtGui.QHBoxLayout()  # для компетентности
+
+        self.box_ranging = QtGui.QGridLayout()  # сетка для ранжирования
+
+        self.group_buttons = QtGui.QButtonGroup()  # группа для кнопок на ранжировании
+        self.connect(self.group_buttons, QtCore.SIGNAL('buttonClicked(int)'), self.click_buttons_ranging)
+
+        self.frame_pair.setLayout(self.box_pair)
+        self.frame_direct.setLayout(self.box_direct)
+        self.frame_ranging.setLayout(self.box_ranging)
+        self.frame_competence.setLayout(self.box_competence)
+
+        self.addTab(self.frame_pair, u'Парное сравнение')
+        self.addTab(self.frame_direct, u'Непосредственная оценка')
+        self.addTab(self.frame_ranging, u'Ранжирование')
+        self.addTab(self.frame_competence, u'Компетентность')
+
+        self.direct_list = []  # список с MyGroupSlider
+        self.result_direct = []
+        self.was_normalization = False
+        self.change_ranging = {'index': -1, 'isClick': False}
+        self.subjects = []
+        self.table_competence = None
+
+    def init_subjects(self, subjects):
+        """
+        обновляет существующий tabwidget - изменяет поля
+        """
+
+        self.subjects = subjects
+
+        # НАСТРОЙКА 1-ОЙ ВКЛАДКИ (ТАБЛИЦЫ)
+        clear_layout(self.box_pair)
+        self.table_pair = MyTable(len(subjects['fields']),
+                             len(subjects['fields']),
+                             subjects)
+        self.box_pair.addWidget(self.table_pair)
+
+        # НАСТРОЙКА 2-ОЙ ВКЛАДКИ (НЕПОСРЕДСТВЕННОГО ОЦЕНИВАНИЯ)
+        clear_layout(self.box_direct)
+        self.direct_list = []
+        for i in subjects['fields']:
+            self.direct_list.append(MyGroupSlider(i))
+            self.connect(self.direct_list[len(self.direct_list) - 1],
+                         QtCore.SIGNAL('valuechange'),
+                         self.change_sum_direct)
+            self.box_direct.addLayout(self.direct_list[len(self.direct_list) - 1])
+
+        self.label_sum = QtGui.QLabel(u'0')
+        self.box_direct.addWidget(self.label_sum, alignment=QtCore.Qt.AlignRight)
+        self.label_sum.setFixedWidth(40)
+        self.buttons_normalization = QtGui.QPushButton('Нормализовать')
+        self.box_direct.addWidget(self.buttons_normalization, alignment=QtCore.Qt.AlignRight)
+        self.connect(self.buttons_normalization,
+                     QtCore.SIGNAL('clicked()'),
+                     self.click_normalization)
+
+        # НАСТРОЙКА ВКЛАДКИ РАНЖИРОВАНИЕ
+        clear_layout(self.box_ranging)
+        self.list_buttons_ranging = []
+        self.list_labels_ranging = []
+        count = 0
+        for i in range(len(subjects['fields'])):  # в i у нас индексы по количеству полей 'fields'
+            self.list_buttons_ranging.append(MyButton(subjects['fields'][i]))
+            self.group_buttons.addButton(self.list_buttons_ranging[i], i)  # добавляем кнопку в группу кнопок
+            self.box_ranging.addWidget(self.list_buttons_ranging[i], 0, count)
+            count += 1
+            if i != len(subjects['fields']) - 1:  # если элемент не последний, то после него нужен label
+                self.list_labels_ranging.append(MyLabel('>'))
+                self.box_ranging.addWidget(self.list_labels_ranging[i], 0, count)
+                count += 1
+
+    def change_sum_direct(self):  # изменяет label (сумма) на вкладке непосредственного оценивания
+        sum = 0
+        for i in self.direct_list:
+            sum += i.get_value() / 100
+        self.label_sum.setText(str(round(sum, 2)))
+
+    def click_normalization(self):
+        sum_ = 0
+
+        local_list = []  # список исходных значений
+
+        for i in self.direct_list:
+            local_list.append(i.get_value())
+            sum_ += i.get_value() / 100  # возвращает значения всех слайдеров / 100
+
+        self.result_direct = []
+        self.result_direct.append(local_list)
+        self.result_direct.append([])
+        z = 1
+        if sum_ != 0:
+            for i in range(len(self.direct_list) - 1):
+                j = self.direct_list[i].get_value() / 100 / sum_
+                z -= j
+                self.direct_list[i].set_label(round(j, 3))  # в label мы его округляем
+                self.result_direct[1].append(j)  # в переменной хранится неокругленное число
+            self.direct_list[len(self.direct_list) - 1].set_label(round(z, 3))
+            self.result_direct[1].append(z)
+        else:
+            for i in self.direct_list:
+                self.result_direct[1].append(0.0)
+
+        if sum_ != 0:
+            self.label_sum.setText('1')
+
+        self.was_normalization = True
+
+    def click_buttons_ranging(self, index):
+        if not self.change_ranging['isClick']:
+            font = QtGui.QFont()
+            font.setBold(True)
+            self.list_buttons_ranging[index].setFont(font)
+            self.change_ranging.update({'index': index})
+            self.change_ranging.update({'isClick': True})
+
+        # если клик был по той же кнопке, то отключаем клик
+        elif self.change_ranging['isClick'] & index == self.change_ranging['index']:
+            font = QtGui.QFont()
+            font.setBold(False)
+            self.list_buttons_ranging[index].setFont(font)
+            self.change_ranging.update({'index': -1})
+            self.change_ranging.update({'isClick': False})
+
+        # если был клик по другой кнопке, то
+        elif self.change_ranging['isClick'] & index != self.change_ranging['index']:
+            temp = []
+            # в новый копируется начало списка до первого упоминаемого индекса:
+            temp.extend(self.list_buttons_ranging[:min(index, self.change_ranging['index'])])
+            if index < self.change_ranging['index']:  # если элемент перемещается справа налево <-
+                temp.append(self.list_buttons_ranging[self.change_ranging['index']])
+                temp.extend(self.list_buttons_ranging[index:self.change_ranging['index']])
+            elif index > self.change_ranging['index']:  # если элемент перемещается слева направо ->
+                temp.extend(self.list_buttons_ranging[self.change_ranging['index'] + 1:index + 1])
+                temp.append(self.list_buttons_ranging[self.change_ranging['index']])
+            temp.extend(self.list_buttons_ranging[max(index + 1, self.change_ranging['index'] + 1):])
+
+            self.list_buttons_ranging = temp
+
+            # формирование нового списка ranzh_list_label ???
+            if index - 1 != -1:
+                self.list_labels_ranging[index - 1].set_value()  # предыдущий индекс
+            if index != len(self.list_labels_ranging):
+                self.list_labels_ranging[index].set_value()  # следующий индекс
+            if self.change_ranging['index'] - 1 != -1:
+                self.list_labels_ranging[self.change_ranging['index'] - 1].set_value()
+            if self.change_ranging['index'] != len(self.list_labels_ranging):
+                self.list_labels_ranging[self.change_ranging['index']].set_value()
+
+            font = QtGui.QFont()
+            font.setBold(False)
+            self.list_buttons_ranging[index].setFont(font)
+            self.change_ranging.update({'index': -1})
+            self.change_ranging.update({'isClick': False})
+
+            self.update_grid_ranging()
+
+    def update_grid_ranging(self):
+        count = 0
+        for i in range(len(self.list_buttons_ranging)):  # в i у нас индексы по количеству полей 'fields'
+            self.group_buttons.setId(self.list_buttons_ranging[i], i)  # присваем кнопке id, равное id по списку
+            self.box_ranging.addWidget(self.list_buttons_ranging[i], 0, count)
+            count += 1
+            if i != len(self.list_buttons_ranging) - 1:  # если элемент не последний, то после него нужен label
+                self.box_ranging.addWidget(self.list_labels_ranging[i], 0, count)
+                count += 1
+
+    def init_competence(self, clients):
+        clear_layout(self.box_competence)
+        self.table_competence = TableExpert(clients)
+        self.box_competence.addWidget(self.table_competence)
+
+    def formation_all_result(self):
+        result = []
+        result.append(self.formation_pair_result())
+        result.append(self.formation_direct_result())
+        result.append(self.formation_ranging_result())
+        result.append(self.formation_competence_result())
+        return result
+
+    def formation_pair_result(self):
+        return self.table_pair.get_list_buttons()
+
+    def formation_direct_result(self):
+        if not self.was_normalization:
+            self.click_normalization()
+        return self.result_direct
+
+    def formation_ranging_result(self):
+        result_ranging_extended = []
+        result_ranging = {}  # словарь "номер поля из self.subjects - ранг"
+        sum_ = 0
+        count = 0
+        temp = []
+        for i in range(len(self.list_labels_ranging)):
+            temp.append(self.list_labels_ranging[i].text())
+        list_labels_text_ranging = temp
+
+        # если все символы в label это '>', то
+        if list_labels_text_ranging.count('~') == 0:
+
+            for i in range(len(self.list_buttons_ranging)):
+                result_ranging[self.subjects['fields'].index(self.list_buttons_ranging[i].text())] = i + 1
+
+        else:  # если встречаются '~', то большие вычисления:
+            for i in range(len(self.list_buttons_ranging)):
+
+                # если первый элемент
+                if i == 0:
+
+                    # это не связанный ранг
+                    if list_labels_text_ranging[i] == '>':
+                        result_ranging[self.subjects['fields'].index(self.list_buttons_ranging[i].text())] = i + 1
+                        print(self.list_buttons_ranging[i].text(), i + 1)
+
+                    # иначе это начало связанного ранга
+                    else:
+                        index_linked_rank = i
+                        start_linked_rank = i + 1
+                        sum_ += start_linked_rank
+                        count += 1
+
+                elif i + 1 == len(self.list_buttons_ranging):  # если последний элемент
+
+                    # это не связанный ранг
+                    if list_labels_text_ranging[i - 1] == '>':
+                        result_ranging[self.subjects['fields'].index(self.list_buttons_ranging[i].text())] = i + 1
+                        print(self.list_buttons_ranging[i].text(), i + 1)
+
+                    # тогда это конец связанного ранга
+                    else:
+                        sum_ += i + 1
+                        count += 1
+                        linked_rank = sum_ / count
+                        for j in range(count):
+                            result_ranging[self.subjects['fields'].index(self.list_buttons_ranging[index_linked_rank].text())] = linked_rank
+                            print(self.list_buttons_ranging[index_linked_rank].text(), linked_rank)
+                            start_linked_rank += 1
+                            index_linked_rank += 1
+                        sum_ = 0
+                        self.count = 0
+                        linked_rank = 0
+
+                else:  # это объект по середине
+
+                    # это не связанный ранг посередине
+                    if (list_labels_text_ranging[i - 1] == '>') and \
+                            (list_labels_text_ranging[i] == '>'):
+                        result_ranging[self.subjects['fields'].index(self.list_buttons_ranging[i].text())] = i + 1
+                        print(self.list_buttons_ranging[i].text(), i + 1)
+
+                    # это начало связанного ранга
+                    elif (list_labels_text_ranging[i - 1] == '>') and \
+                            (list_labels_text_ranging[i] == '~'):
+                        index_linked_rank = i
+                        start_linked_rank = i + 1
+                        sum_ += start_linked_rank
+                        count += 1
+
+                    # связанный ранг посередине
+                    elif (list_labels_text_ranging[i - 1] == '~') and \
+                            (list_labels_text_ranging[i] == '~'):
+                        sum_ += i + 1
+                        count += 1
+
+                    # это конец связанного ранга
+                    elif list_labels_text_ranging[i - 1] == '~' and \
+                            (list_labels_text_ranging[i] == '>'):
+                        sum_ += i + 1
+                        count += 1
+                        linked_rank = sum_ / count
+                        for j in range(count):
+                            result_ranging[self.subjects['fields'].index(
+                                self.list_buttons_ranging[index_linked_rank].text())] = linked_rank
+                            print(self.list_buttons_ranging[index_linked_rank].text(), linked_rank)
+                            start_linked_rank += 1
+                            index_linked_rank += 1
+                        sum_ = 0
+                        count = 0
+                        linked_rank = 0
+
+        # доработка ранжирования
+        result_ranging_extended = []
+        result_ranging_extended.append(result_ranging)
+        temp = []
+        for i in range(len(self.list_buttons_ranging)):
+            temp.append(self.list_buttons_ranging[i].text())
+        result_ranging_extended.append(temp)
+        result_ranging_extended.append(list_labels_text_ranging)
+
+        return result_ranging_extended
+
+    def formation_competence_result(self):
+        return self.table_competence.get_list_buttons()
 
 
 def matrix(a, b):
